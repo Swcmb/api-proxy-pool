@@ -73,7 +73,7 @@ def main() -> None:
         encoding="utf-8",
     )
     FAST_FILE.write_text(
-        "".join(f"{proxy}\n" for proxy, _ in fast)
+        "".join(f"{proxy}\n" for proxy, _ in fast),
         encoding="utf-8",
     )
 
