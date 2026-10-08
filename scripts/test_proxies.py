@@ -7,7 +7,12 @@ from pathlib import Path
 
 import requests
 
-SOURCE_URL = "https://cdn.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt"
+SOURCE_URLS = (
+    "https://cdn.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
+    "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text",
+    "https://raw.githubusercontent.com/proxyscrape/free-proxy-list/main/proxies/all/data.txt",
+    "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/all.txt",
+)
 TEST_URL = "https://www.gstatic.com/generate_204"
 TIMEOUT = 8
 MAX_WORKERS = 200
@@ -28,19 +33,42 @@ def create_direct_session() -> requests.Session:
     return session
 
 
-def download_proxies() -> list[str]:
-    """Download the source list without using the computer's configured proxy."""
-    with create_direct_session() as session:
-        response = session.get(SOURCE_URL, timeout=30)
-        response.raise_for_status()
-        content = response.text
+def download_proxies() -> tuple[list[str], str]:
+    """Try several public sources directly, without local environment proxies."""
+    errors: list[str] = []
 
-    proxies: set[str] = set()
-    for line in content.splitlines():
-        proxy = line.strip()
-        if PROXY_PATTERN.fullmatch(proxy):
-            proxies.add(proxy)
-    return sorted(proxies)
+    for source_url in SOURCE_URLS:
+        try:
+            with create_direct_session() as session:
+                response = session.get(source_url, timeout=30)
+                response.raise_for_status()
+                content = response.text
+
+            proxies = {
+                line.strip()
+                for line in content.splitlines()
+                if PROXY_PATTERN.fullmatch(line.strip())
+            }
+            if proxies:
+                print(f"Proxy source selected: {source_url}")
+                print(f"Source proxies: {len(proxies)}")
+                return sorted(proxies), source_url
+
+            message = "download succeeded but contained no supported proxy entries"
+            print(f"[SOURCE FAIL] {source_url}: {message}")
+            errors.append(f"{source_url}: {message}")
+        except requests.RequestException as exc:
+            message = f"{type(exc).__name__}: {exc}"
+            print(f"[SOURCE FAIL] {source_url}: {message}")
+            errors.append(f"{source_url}: {message}")
+
+    details = "\n".join(f"  - {item}" for item in errors)
+    raise SystemExit(
+        "Could not download a proxy list from any source using direct connections.\n"
+        "The program did not fall back to your computer's environment proxy.\n"
+        "Check whether direct HTTPS access is available from this network.\n"
+        f"{details}"
+    )
 
 
 def test_proxy(proxy: str):
@@ -115,8 +143,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    proxies = download_proxies()
-    print(f"Source proxies: {len(proxies)}")
+    proxies, source_used = download_proxies()
     print("Local environment proxies: DISABLED")
     print("Download source: direct connection")
     print("Each proxy test: routed only through that tested proxy")
@@ -147,12 +174,14 @@ def main() -> None:
     )
 
     stats = {
-        "source": SOURCE_URL,
+        "source": source_used,
         "test_url": TEST_URL,
         "tested": len(proxies),
         "valid": len(valid),
         "fast_lt_1500ms": len(fast),
-        "generated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "generated_at_utc": time.strftime(
+            "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+        ),
     }
     STATS_FILE.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
 
