@@ -73,7 +73,7 @@ def main() -> None:
         encoding="utf-8",
     )
     FAST_FILE.write_text(
-        "".join(f"{proxy[9:] if proxy.lower().startswith(\"socks4://\") else proxy}\n" for proxy, _ in fast),
+        "".join(f"{proxy}\n" for proxy, _ in fast)
         encoding="utf-8",
     )
 
