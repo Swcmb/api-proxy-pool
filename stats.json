@@ -1,0 +1,8 @@
+{
+  "source": "https://cdn.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
+  "test_url": "https://www.gstatic.com/generate_204",
+  "tested": 0,
+  "valid": 0,
+  "fast_lt_1500ms": 0,
+  "generated_at_utc": null
+}
