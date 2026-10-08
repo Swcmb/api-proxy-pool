@@ -34,12 +34,14 @@ def create_direct_session() -> requests.Session:
 
 
 def download_proxies() -> tuple[list[str], str]:
-    """Try several public sources directly, without local environment proxies."""
+    """Download the source list using the computer's configured proxy if available."""
     errors: list[str] = []
 
     for source_url in SOURCE_URLS:
         try:
-            with create_direct_session() as session:
+            # Keep trust_env enabled for source downloads so Requests can use
+            # configured HTTP(S)_PROXY / ALL_PROXY or the OS proxy settings.
+            with requests.Session() as session:
                 response = session.get(source_url, timeout=30)
                 response.raise_for_status()
                 content = response.text
@@ -52,6 +54,7 @@ def download_proxies() -> tuple[list[str], str]:
             if proxies:
                 print(f"Proxy source selected: {source_url}")
                 print(f"Source proxies: {len(proxies)}")
+                print("Source download: computer-configured proxy/direct fallback")
                 return sorted(proxies), source_url
 
             message = "download succeeded but contained no supported proxy entries"
@@ -64,12 +67,11 @@ def download_proxies() -> tuple[list[str], str]:
 
     details = "\n".join(f"  - {item}" for item in errors)
     raise SystemExit(
-        "Could not download a proxy list from any source using direct connections.\n"
-        "The program did not fall back to your computer's environment proxy.\n"
-        "Check whether direct HTTPS access is available from this network.\n"
+        "Could not download a proxy list from any source.\n"
+        "Source downloads may use the computer's configured proxy; proxy-node "
+        "tests still ignore local proxy settings.\n"
         f"{details}"
     )
-
 
 def test_proxy(proxy: str):
     """Test this node through itself; never fall back to environment proxies."""
