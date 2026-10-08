@@ -147,7 +147,7 @@ def main() -> None:
 
     proxies, source_used = download_proxies()
     print("Local environment proxies: DISABLED")
-    print("Download source: direct connection")
+    print("Download source: computer-configured proxy if available")
     print("Each proxy test: routed only through that tested proxy")
 
     valid: list[tuple[str, float]] = []
