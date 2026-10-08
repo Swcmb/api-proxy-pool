@@ -16,7 +16,7 @@ OUTPUT_FILE = Path("valid.txt")
 FAST_FILE = Path("fast.txt")
 STATS_FILE = Path("stats.json")
 
-PROXY_PATTERN = re.compile(r"^(https?|socks4|socks5)://([^:\s]+):(\d+)$", re.I)
+PROXY_PATTERN = re.compile(r"^(https?|socks5)://([^:\s]+):(\d+)$", re.I)
 
 
 def download_proxies() -> list[str]:
@@ -69,7 +69,7 @@ def main() -> None:
     fast = [item for item in valid if item[1] < FAST_LATENCY_MS]
 
     OUTPUT_FILE.write_text(
-        "".join(f"{proxy[9:] if proxy.lower().startswith(\"socks4://\") else proxy}\n" for proxy, _ in valid),
+        "".join(f"{proxy}\n" for proxy, _ in valid),
         encoding="utf-8",
     )
     FAST_FILE.write_text(
