@@ -69,11 +69,11 @@ def main() -> None:
     fast = [item for item in valid if item[1] < FAST_LATENCY_MS]
 
     OUTPUT_FILE.write_text(
-        "".join(f"{proxy}\n" for proxy, _ in valid),
+        "".join(f"{proxy[9:] if proxy.lower().startswith(\"socks4://\") else proxy}\n" for proxy, _ in valid),
         encoding="utf-8",
     )
     FAST_FILE.write_text(
-        "".join(f"{proxy}\n" for proxy, _ in fast),
+        "".join(f"{proxy[9:] if proxy.lower().startswith(\"socks4://\") else proxy}\n" for proxy, _ in fast),
         encoding="utf-8",
     )
 
