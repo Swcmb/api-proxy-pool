@@ -25,20 +25,8 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade requests PySocks
 
-      - name: Exclude SOCKS4 before testing
-        run: |
-          python - <<'PY'
-          import re
-          from scripts import test_proxies
-
-          test_proxies.PROXY_PATTERN = re.compile(
-              r"^(https?|socks5)://([^:\s]+):(\d+)$",
-              re.I,
-          )
-
-          print("SOCKS4/SOCKS4A proxies are excluded before testing.")
-          test_proxies.main()
-          PY
+      - name: Test proxies
+        run: python scripts/test_proxies.py
 
       - name: Commit valid proxies
         run: |
