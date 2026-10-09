@@ -8,10 +8,8 @@ from pathlib import Path
 import requests
 
 SOURCE_URLS = (
-    "https://cdn.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
-    "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text",
-    "https://raw.githubusercontent.com/proxyscrape/free-proxy-list/main/proxies/all/data.txt",
-    "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/all.txt",
+    "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt",
+    "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt",
 )
 TEST_URL = "https://www.gstatic.com/generate_204"
 TIMEOUT = 8
@@ -23,6 +21,7 @@ FAST_FILE = Path("fast.txt")
 STATS_FILE = Path("stats.json")
 
 PROXY_PATTERN = re.compile(r"^(https?|socks5)://([^:\s]+):(\d+)$", re.I)
+BARE_PROXY_PATTERN = re.compile(r"^[^:/\s]+:\d+$")
 
 
 def create_direct_session() -> requests.Session:
@@ -31,6 +30,20 @@ def create_direct_session() -> requests.Session:
     session.trust_env = False
     session.proxies.clear()
     return session
+
+
+def parse_source_proxies(content: str) -> set[str]:
+    """Parse protocol-qualified entries and probe HProxy's bare IP:port entries."""
+    proxies: set[str] = set()
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if PROXY_PATTERN.fullmatch(line):
+            proxies.add(line)
+        elif BARE_PROXY_PATTERN.fullmatch(line):
+            # HProxy's elite.txt does not include protocols. Probe supported
+            # schemes; SOCKS4 remains excluded.
+            proxies.update(f"{scheme}://{line}" for scheme in ("http", "https", "socks5"))
+    return proxies
 
 
 def download_proxies() -> tuple[list[str], str]:
@@ -46,11 +59,7 @@ def download_proxies() -> tuple[list[str], str]:
                 response.raise_for_status()
                 content = response.text
 
-            proxies = {
-                line.strip()
-                for line in content.splitlines()
-                if PROXY_PATTERN.fullmatch(line.strip())
-            }
+            proxies = parse_source_proxies(content)
             if proxies:
                 print(f"Proxy source selected: {source_url}")
                 print(f"Source proxies: {len(proxies)}")
