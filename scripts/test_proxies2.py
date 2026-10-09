@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 
 SOURCE_URLS = (
-    "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt"
+    "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt",
 )
 TEST_URL = "https://www.gstatic.com/generate_204"
 TIMEOUT = 8
