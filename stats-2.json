@@ -1,8 +1,8 @@
 {
   "source": "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt",
   "test_url": "https://www.gstatic.com/generate_204",
-  "tested": 9441,
-  "valid": 885,
-  "fast_lt_1500ms": 142,
-  "generated_at_utc": "2026-10-09T05:22:04Z"
+  "tested": 9168,
+  "valid": 550,
+  "fast_lt_1500ms": 75,
+  "generated_at_utc": "2026-10-09T11:49:49Z"
 }
