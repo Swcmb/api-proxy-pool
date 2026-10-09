@@ -2,7 +2,7 @@
 
 Free public proxy pool for API.
 
-Sources (first available non-empty source is used):
+Sources (all successfully downloaded lists are merged and deduplicated):
 - [Proxifly `proxies/all/data.txt`](https://github.com/proxifly/free-proxy-list/blob/main/proxies/all/data.txt)
 - [HProxy `elite.txt`](https://github.com/hproxy-com/free-proxy-list/blob/main/elite.txt); bare `IP:port` entries are probed as HTTP, HTTPS, and SOCKS5.
 
