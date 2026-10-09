@@ -9,7 +9,6 @@ import requests
 
 SOURCE_URLS = (
     "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt",
-    "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt",
 )
 TEST_URL = "https://www.gstatic.com/generate_204"
 TIMEOUT = 8
