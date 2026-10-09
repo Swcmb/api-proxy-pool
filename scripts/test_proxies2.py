@@ -15,9 +15,9 @@ TIMEOUT = 8
 MAX_WORKERS = 200
 FAST_LATENCY_MS = 1500
 
-OUTPUT_FILE = Path("valid.txt")
-FAST_FILE = Path("fast.txt")
-STATS_FILE = Path("stats.json")
+OUTPUT_FILE = Path("valid-2.txt")
+FAST_FILE = Path("fast-2.txt")
+STATS_FILE = Path("stats-2.json")
 
 PROXY_PATTERN = re.compile(r"^(https?|socks5)://([^:\s]+):(\d+)$", re.I)
 BARE_PROXY_PATTERN = re.compile(r"^[^:/\s]+:\d+$")
