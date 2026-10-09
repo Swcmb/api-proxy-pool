@@ -47,8 +47,10 @@ def parse_source_proxies(content: str) -> set[str]:
 
 
 def download_proxies() -> tuple[list[str], str]:
-    """Download the source list using the computer's configured proxy if available."""
+    """Download and merge all configured source lists, using the configured proxy if available."""
     errors: list[str] = []
+    merged_proxies: set[str] = set()
+    successful_sources: list[str] = []
 
     for source_url in SOURCE_URLS:
         try:
@@ -59,28 +61,34 @@ def download_proxies() -> tuple[list[str], str]:
                 response.raise_for_status()
                 content = response.text
 
-            proxies = parse_source_proxies(content)
-            if proxies:
-                print(f"Proxy source selected: {source_url}")
-                print(f"Source proxies: {len(proxies)}")
-                print("Source download: computer-configured proxy/direct fallback")
-                return sorted(proxies), source_url
-
-            message = "download succeeded but contained no supported proxy entries"
-            print(f"[SOURCE FAIL] {source_url}: {message}")
-            errors.append(f"{source_url}: {message}")
+            source_proxies = parse_source_proxies(content)
+            if source_proxies:
+                merged_proxies.update(source_proxies)
+                successful_sources.append(source_url)
+                print(f"Proxy source loaded: {source_url}")
+                print(f"Source proxies: {len(source_proxies)}")
+            else:
+                message = "download succeeded but contained no supported proxy entries"
+                print(f"[SOURCE FAIL] {source_url}: {message}")
+                errors.append(f"{source_url}: {message}")
         except requests.RequestException as exc:
             message = f"{type(exc).__name__}: {exc}"
             print(f"[SOURCE FAIL] {source_url}: {message}")
             errors.append(f"{source_url}: {message}")
 
-    details = "\n".join(f"  - {item}" for item in errors)
-    raise SystemExit(
-        "Could not download a proxy list from any source.\n"
-        "Source downloads may use the computer's configured proxy; proxy-node "
-        "tests still ignore local proxy settings.\n"
-        f"{details}"
-    )
+    if not merged_proxies:
+        details = "\n".join(f"  - {item}" for item in errors)
+        raise SystemExit(
+            "Could not download proxy entries from any source.\n"
+            "Source downloads may use the computer's configured proxy; proxy-node "
+            "tests still ignore local proxy settings.\n"
+            f"{details}"
+        )
+
+    print(f"Proxy sources loaded: {len(successful_sources)}/{len(SOURCE_URLS)}")
+    print(f"Total unique proxies after merging: {len(merged_proxies)}")
+    print("Source download: computer-configured proxy/direct fallback")
+    return sorted(merged_proxies), ";".join(successful_sources)
 
 def test_proxy(proxy: str):
     """Test this node through itself; never fall back to environment proxies."""
