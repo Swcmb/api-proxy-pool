@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.test_proxies import MAX_PROXIES_TO_TEST, parse_proxies, select_candidates
+from scripts.test_proxies import MAX_PROXIES_TO_TEST, parse_proxies, select_candidates, to_clash_config
 
 
 class ProxyParserTests(unittest.TestCase):
@@ -32,6 +32,14 @@ class ProxyParserTests(unittest.TestCase):
         self.assertEqual(len(selected), MAX_PROXIES_TO_TEST)
         self.assertEqual(selected, select_candidates(candidates))
         self.assertEqual(selected, sorted(selected))
+
+    def test_clash_generation_preserves_input_order_and_node_limit(self):
+        config = to_clash_config(
+            ["http://198.51.100.2:8080", "socks5://198.51.100.1:1080"],
+            max_nodes=1,
+        )
+        self.assertIn('name: "http-198.51.100.2-8080"', config)
+        self.assertNotIn('name: "socks5-198.51.100.1-1080"', config)
 
     def test_small_candidate_pool_is_preserved(self):
         candidates = ["http://192.0.2.1:8080"]
