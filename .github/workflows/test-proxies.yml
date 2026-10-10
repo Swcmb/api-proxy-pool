@@ -1,4 +1,4 @@
-name: Test Free Proxies
+name: Test Public Proxy Pool
 
 on:
   workflow_dispatch:
@@ -7,6 +7,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: test-public-proxy-pool
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -25,17 +29,22 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade requests PySocks
 
-      - name: Test proxies
+      - name: Validate parser tests
+        run: |
+          python -m py_compile scripts/test_proxies.py
+          python -m unittest discover -s tests -v
+
+      - name: Test proxy pool and generate outputs
         run: python scripts/test_proxies.py
 
-      - name: Commit valid proxies
+      - name: Commit generated files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add valid.txt fast.txt stats.json
+          git add valid.txt fast.txt stats.json clash.yaml
           if git diff --cached --quiet; then
             echo "No changes"
           else
-            git commit -m "chore: update valid proxies"
+            git commit -m "chore: update tested proxy pool"
             git push
           fi
