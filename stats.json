@@ -31,7 +31,7 @@
   "available_candidates": 63350,
   "candidate_limit": 2500,
   "tested": 2500,
-  "valid": 86,
-  "fast_lt_1500ms": 9,
-  "generated_at_utc": "2026-10-10T12:01:59Z"
+  "valid": 75,
+  "fast_lt_1500ms": 12,
+  "generated_at_utc": "2026-10-10T12:04:11Z"
 }
