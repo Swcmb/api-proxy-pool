@@ -510,7 +510,16 @@ def main() -> None:
         if not source_proxies:
             raise SystemExit(f"No supported proxies found in {args.clash_from_file}")
 
-        clash_text = to_clash_config(sorted(source_proxies), max_nodes=args.max_nodes)
+        ordered_proxies = []
+        seen_proxies = set()
+        for raw_line in source_content.splitlines():
+            line_proxies, _ = parse_proxies(raw_line)
+            for proxy in line_proxies:
+                if proxy not in seen_proxies:
+                    seen_proxies.add(proxy)
+                    ordered_proxies.append(proxy)
+
+        clash_text = to_clash_config(ordered_proxies, max_nodes=args.max_nodes)
         if not clash_text:
             raise SystemExit("No Clash-compatible proxies available to export")
 
