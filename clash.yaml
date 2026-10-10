@@ -1,0 +1,45 @@
+proxies:
+  - name: "http-101.251.204.174-8080"
+    type: http
+    server: 101.251.204.174
+    port: 8080
+  - name: "http-27.185.218.213-17981"
+    type: http
+    server: 27.185.218.213
+    port: 17981
+  - name: "http-36.111.33.167-13128"
+    type: http
+    server: 36.111.33.167
+    port: 13128
+  - name: "http-180.105.138.136-1080"
+    type: http
+    server: 180.105.138.136
+    port: 1080
+  - name: "http-122.246.4.30-17981"
+    type: http
+    server: 122.246.4.30
+    port: 17981
+  - name: "http-119.188.131.55-17981"
+    type: http
+    server: 119.188.131.55
+    port: 17981
+  - name: "http-4.144.146.21-80"
+    type: http
+    server: 4.144.146.21
+    port: 80
+  - name: "http-122.246.3.12-17981"
+    type: http
+    server: 122.246.3.12
+    port: 17981
+  - name: "http-116.196.150.180-17981"
+    type: http
+    server: 116.196.150.180
+    port: 17981
+  - name: "http-120.232.115.170-17981"
+    type: http
+    server: 120.232.115.170
+    port: 17981
+  - name: "http-120.232.115.57-17981"
+    type: http
+    server: 120.232.115.57
+    port: 17981

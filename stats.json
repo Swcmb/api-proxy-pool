@@ -1,8 +1,42 @@
 {
-  "source": "https://cdn.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
+  "source_groups": [
+    "proxyscrape-jsdelivr",
+    "proxyscrape-api",
+    "proxyscrape-raw",
+    "litportnet-raw"
+  ],
+  "mirrors_per_group": {
+    "proxyscrape-jsdelivr": 4,
+    "proxyscrape-api": 1,
+    "proxyscrape-raw": 5,
+    "litportnet-raw": 5
+  },
+  "per_source_counts": {
+    "proxyscrape-jsdelivr": 3375,
+    "proxyscrape-raw": 3151,
+    "litportnet-raw": 1982
+  },
+  "per_source_excluded_socks4": {
+    "proxyscrape-jsdelivr": 250,
+    "proxyscrape-raw": 205,
+    "litportnet-raw": 445
+  },
+  "used_url": {
+    "proxyscrape-jsdelivr": "https://fastly.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
+    "proxyscrape-raw": "https://raw.githubusercontent.com/proxyscrape/free-proxy-list/main/proxies/all/data.txt",
+    "litportnet-raw": "https://ghproxy.net/https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/all.txt"
+  },
+  "excluded_schemes": [
+    "socks4",
+    "socks4a"
+  ],
+  "total_excluded_socks4": 900,
+  "download_retries": 3,
+  "download_timeout": 30,
   "test_url": "https://www.gstatic.com/generate_204",
-  "tested": 2238,
-  "valid": 644,
-  "fast_lt_1500ms": 64,
-  "generated_at_utc": "2026-10-08T22:45:31Z"
+  "tested": 7063,
+  "valid": 1248,
+  "fast_lt_ms": 1500,
+  "fast_count": 11,
+  "generated_at_utc": "2026-10-10T10:13:35Z"
 }
