@@ -2,6 +2,7 @@ import argparse
 import concurrent.futures
 import json
 import os
+import random
 import re
 import time
 from pathlib import Path
@@ -27,8 +28,9 @@ SOURCE_GROUPS = (
 )
 
 TEST_URL = "https://www.gstatic.com/generate_204"
-TIMEOUT = 8
+TIMEOUT = 5
 MAX_WORKERS = 200
+MAX_PROXIES_TO_TEST = 2500
 FAST_LATENCY_MS = 1500
 
 DOWNLOAD_TIMEOUT = 30
@@ -247,6 +249,16 @@ def download_proxies() -> tuple[list[str], dict, dict, dict, int]:
         used_url,
         total_socks4_excluded,
     )
+
+
+def select_candidates(proxies: list[str]) -> list[str]:
+    """Cap each run's workload and rotate the sample daily while keeping runs reproducible."""
+    if len(proxies) <= MAX_PROXIES_TO_TEST:
+        return proxies
+
+    seed = time.strftime("%Y-%m-%d", time.gmtime())
+    selected = random.Random(seed).sample(proxies, MAX_PROXIES_TO_TEST)
+    return sorted(selected)
 
 
 def test_proxy(proxy: str):
@@ -477,11 +489,34 @@ def main() -> None:
         help="max nodes to write into the Clash config (default: 200)",
     )
     parser.add_argument(
+        "--clash-from-file",
+        type=Path,
+        help="generate clash.yaml from an existing proxy list without re-testing proxies",
+    )
+    parser.add_argument(
         "--no-clash",
         action="store_true",
         help="do not write clash.yaml",
     )
     args = parser.parse_args()
+
+    if args.clash_from_file:
+        try:
+            source_content = args.clash_from_file.read_text(encoding="utf-8-sig")
+        except OSError as exc:
+            raise SystemExit(f"Cannot read proxy list {args.clash_from_file}: {exc}") from exc
+
+        source_proxies, _ = parse_proxies(source_content)
+        if not source_proxies:
+            raise SystemExit(f"No supported proxies found in {args.clash_from_file}")
+
+        clash_text = to_clash_config(sorted(source_proxies), max_nodes=args.max_nodes)
+        if not clash_text:
+            raise SystemExit("No Clash-compatible proxies available to export")
+
+        CLASH_FILE.write_text(clash_text, encoding="utf-8")
+        print(f"Wrote Clash config: {CLASH_FILE} ({clash_text.count('  - name:')} nodes)")
+        return
 
     (
         proxies,
@@ -490,6 +525,11 @@ def main() -> None:
         used_url,
         total_socks4_excluded,
     ) = download_proxies()
+
+    available_candidates = len(proxies)
+    proxies = select_candidates(proxies)
+    print(f"Candidate proxies available: {available_candidates}")
+    print(f"Candidate proxies selected for testing: {len(proxies)} (limit={MAX_PROXIES_TO_TEST})")
 
     print("Local environment proxies: DISABLED")
     print(f"Source groups used ({len(per_source)}/{len(SOURCE_GROUPS)}):")
@@ -535,6 +575,8 @@ def main() -> None:
         "download_retries": DOWNLOAD_RETRIES,
         "download_timeout": DOWNLOAD_TIMEOUT,
         "test_url": TEST_URL,
+        "available_candidates": available_candidates,
+        "candidate_limit": MAX_PROXIES_TO_TEST,
         "tested": len(proxies),
         "valid": len(valid),
         "fast_lt_1500ms": len(fast),
