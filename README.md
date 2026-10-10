@@ -20,7 +20,7 @@ Only HTTP, HTTPS, and SOCKS5 nodes are kept. SOCKS4/SOCKS4a entries are excluded
 | [`clash.yaml`](https://raw.githubusercontent.com/Swcmb/api-proxy-pool/main/clash.yaml) | Generated Clash-compatible configuration |
 | [`stats.json`](https://raw.githubusercontent.com/Swcmb/api-proxy-pool/main/stats.json) | Source and test statistics |
 
-GitHub Actions runs the test workflow every 30 minutes and also supports manual runs. It downloads source lists with the configured mirrors, tests each node through that node itself, and commits changed output files.
+GitHub Actions runs the test workflow every 30 minutes and also supports manual runs. Each run samples at most 2,500 candidates (rotated daily) and uses a 5-second per-proxy timeout to stay within the 15-minute job limit. Results are sorted by latency before the generated files are committed.
 
 ## Use with an API client
 
@@ -54,7 +54,7 @@ python scripts/test_proxies.py --config /path/to/config.json
 
 ## Publish the Clash subscription to Gist
 
-Configure the repository Actions secrets `GIST_TOKEN` and `GIST_ID`. The token needs permission to update Gists. The separate Gist workflow publishes the latest committed `clash.yaml` every six hours without re-running the full proxy scan.
+Configure the repository Actions secrets `GIST_TOKEN` and `GIST_ID`. Every six hours, the Gist workflow regenerates `clash.yaml` from the latest `fast.txt`, commits the updated file to this repository, and publishes the same content to the configured Gist. This refresh does not re-run the full proxy scan.
 
 ## Security
 
