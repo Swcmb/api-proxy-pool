@@ -1,6 +1,12 @@
 name: Test Public Proxy Pool
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/**"
   workflow_dispatch:
   schedule:
     - cron: "*/30 * * * *"
