@@ -1,42 +1,37 @@
 {
   "source_groups": [
-    "proxyscrape-jsdelivr",
-    "proxyscrape-api",
-    "proxyscrape-raw",
-    "litportnet-raw"
+    "proxifly-all",
+    "hproxy-elite"
   ],
   "mirrors_per_group": {
-    "proxyscrape-jsdelivr": 4,
-    "proxyscrape-api": 1,
-    "proxyscrape-raw": 5,
-    "litportnet-raw": 5
+    "proxifly-all": 3,
+    "hproxy-elite": 1
   },
   "per_source_counts": {
-    "proxyscrape-jsdelivr": 3375,
-    "proxyscrape-raw": 3151,
-    "litportnet-raw": 1982
+    "proxifly-all": 53369,
+    "hproxy-elite": 11364
   },
   "per_source_excluded_socks4": {
-    "proxyscrape-jsdelivr": 250,
-    "proxyscrape-raw": 205,
-    "litportnet-raw": 445
+    "proxifly-all": 466,
+    "hproxy-elite": 0
   },
   "used_url": {
-    "proxyscrape-jsdelivr": "https://fastly.jsdelivr.net/gh/proxyscrape/free-proxy-list@main/proxies/all/data.txt",
-    "proxyscrape-raw": "https://raw.githubusercontent.com/proxyscrape/free-proxy-list/main/proxies/all/data.txt",
-    "litportnet-raw": "https://ghproxy.net/https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/all.txt"
+    "proxifly-all": "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt",
+    "hproxy-elite": "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt"
   },
-  "excluded_schemes": [
+  "source_count": 2,
+  "excluded_protocols": [
     "socks4",
     "socks4a"
   ],
-  "total_excluded_socks4": 900,
+  "total_excluded_socks4": 466,
   "download_retries": 3,
   "download_timeout": 30,
   "test_url": "https://www.gstatic.com/generate_204",
-  "tested": 7063,
-  "valid": 1248,
-  "fast_lt_ms": 1500,
-  "fast_count": 11,
-  "generated_at_utc": "2026-10-10T10:13:35Z"
+  "available_candidates": 63350,
+  "candidate_limit": 2500,
+  "tested": 2500,
+  "valid": 86,
+  "fast_lt_1500ms": 9,
+  "generated_at_utc": "2026-10-10T12:01:59Z"
 }
