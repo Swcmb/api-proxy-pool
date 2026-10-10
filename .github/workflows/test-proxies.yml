@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: test-public-proxy-pool
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   test:
