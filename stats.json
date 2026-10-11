@@ -8,30 +8,30 @@
     "hproxy-elite": 1
   },
   "per_source_counts": {
-    "proxifly-all": 55388,
-    "hproxy-elite": 13422
+    "hproxy-elite": 12912,
+    "proxifly-all": 56471
   },
   "per_source_excluded_socks4": {
-    "proxifly-all": 469,
-    "hproxy-elite": 0
+    "hproxy-elite": 0,
+    "proxifly-all": 721
   },
   "used_url": {
-    "proxifly-all": "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt",
-    "hproxy-elite": "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt"
+    "hproxy-elite": "https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/elite.txt",
+    "proxifly-all": "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt"
   },
   "source_count": 2,
   "excluded_protocols": [
     "socks4",
     "socks4a"
   ],
-  "total_excluded_socks4": 469,
+  "total_excluded_socks4": 721,
   "download_retries": 3,
   "download_timeout": 30,
   "test_url": "https://www.gstatic.com/generate_204",
-  "available_candidates": 66955,
+  "available_candidates": 67297,
   "candidate_limit": 2500,
   "tested": 2500,
-  "valid": 64,
-  "fast_lt_1500ms": 7,
-  "generated_at_utc": "2026-10-10T21:55:52Z"
+  "valid": 92,
+  "fast_lt_1500ms": 10,
+  "generated_at_utc": "2026-10-11T00:38:02Z"
 }
