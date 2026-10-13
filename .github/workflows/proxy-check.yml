@@ -168,11 +168,15 @@ jobs:
 
           chmod +x raw/mubeng
 
+          # mubeng 若检测到 stdin 不是字符设备（即管道/重定向），会优先读 stdin
+          # 并忽略 -f 参数。GitHub Actions 步骤的 stdin 是管道，故显式接到
+          # /dev/null（字符设备）以强制走 -f 文件输入。
           raw/mubeng \
             -f "$INPUT" \
             -o output/alive-${{ matrix.id }}.txt \
             -c 500 \
-            --timeout 10
+            --timeout 10 \
+            < /dev/null
 
       - uses: actions/upload-artifact@v4
         with:
