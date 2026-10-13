@@ -35,16 +35,27 @@ jobs:
             -o workspace/proxifly.txt
 
           echo "Downloading latest mubeng..."
-          VERSION=$(curl -s \
+          ASSET_URL=$(curl -s \
             https://api.github.com/repos/mubeng/mubeng/releases/latest \
-            | jq -r .tag_name)
+            | jq -r '
+                .assets[]
+                | select(.name | test("linux.*amd64|amd64.*linux"; "i"))
+                | .browser_download_url
+              ' \
+            | head -1)
 
-          echo "mubeng version: $VERSION"
+          if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
+            echo "Cannot find mubeng linux amd64 asset"
+            curl -s \
+              https://api.github.com/repos/mubeng/mubeng/releases/latest \
+              | jq '.assets[].name'
+            exit 1
+          fi
 
-          wget \
-            https://github.com/mubeng/mubeng/releases/download/${VERSION}/mubeng_linux_amd64.tar.gz \
-            -O workspace/mubeng.tar.gz
+          echo "mubeng asset:"
+          echo "$ASSET_URL"
 
+          wget "$ASSET_URL" -O workspace/mubeng.tar.gz
           tar -xf workspace/mubeng.tar.gz -C workspace
           chmod +x workspace/mubeng
           workspace/mubeng --version || true
@@ -74,7 +85,7 @@ jobs:
             workspace/proxifly.txt \
             workspace/all.txt
 
-          echo "Total proxies:"
+          echo "Proxy count:"
           wc -l workspace/all.txt
 
           echo "Preview:"
@@ -104,7 +115,7 @@ jobs:
             workspace/all.txt \
             $CHUNKS
 
-          echo "Chunk status:"
+          echo "Chunk information:"
           find workspace/chunks -type f -exec wc -l {} \;
 
       - uses: actions/upload-artifact@v4
@@ -140,7 +151,7 @@ jobs:
 
           FILE=workspace/chunks/${{ matrix.id }}.txt
 
-          echo "Testing chunk:"
+          echo "Testing:"
           echo "$FILE"
 
           if [ ! -s "$FILE" ]; then
@@ -168,7 +179,7 @@ jobs:
           path: result
 
   build:
-    name: Build Output
+    name: Build Proxy Output
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -182,7 +193,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Generate outputs
+      - name: Generate output
         shell: bash
         run: |
           python scripts/merge_json.py alive output
@@ -205,7 +216,7 @@ jobs:
           name: proxy-result
           path: public
 
-      - name: Deploy Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
