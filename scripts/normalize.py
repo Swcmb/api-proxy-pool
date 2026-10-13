@@ -1,28 +1,92 @@
-﻿import csv
+from __future__ import annotations
+
+import csv
 import sys
+from pathlib import Path
 
-csv_file = sys.argv[1]
-proxifly = sys.argv[2]
-output = sys.argv[3]
+VALID_PROTOCOLS = {"http", "https", "socks4", "socks5"}
+VALID_PREFIXES = ("http://", "https://", "socks4://", "socks5://")
 
-result = set()
 
-with open(csv_file, encoding="utf8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        if row.get("alive") != "true":
-            continue
-        for protocol in row["protocols"].split(","):
-            result.add(f"{protocol.strip()}://{row['ip']}:{row['port']}")
+def load_hproxy_csv(path: Path) -> set[str]:
+    proxies: set[str] = set()
 
-with open(proxifly, encoding="utf8") as f:
-    for line in f:
-        line = line.strip()
-        if line:
-            result.add(line)
+    if not path.exists():
+        return proxies
 
-with open(output, "w", encoding="utf8") as f:
-    for item in sorted(result):
-        f.write(item + "\n")
+    with path.open(encoding="utf-8", errors="ignore", newline="") as f:
+        reader = csv.DictReader(f)
 
-print("total:", len(result))
+        for row in reader:
+            alive = str(row.get("alive") or "").lower()
+            if alive != "true":
+                continue
+
+            ip = (row.get("ip") or "").strip()
+            port = (row.get("port") or "").strip()
+            if not ip or not port:
+                continue
+
+            protocols = row.get("protocols")
+            if protocols is None:
+                protocols = "http"
+
+            for protocol in protocols.split(","):
+                protocol = protocol.strip().lower()
+                if protocol in VALID_PROTOCOLS:
+                    proxies.add(f"{protocol}://{ip}:{port}")
+
+    return proxies
+
+
+def load_proxifly_txt(path: Path) -> set[str]:
+    proxies: set[str] = set()
+
+    if not path.exists():
+        return proxies
+
+    with path.open(encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            proxy = line.strip()
+            if proxy and proxy.startswith(VALID_PREFIXES):
+                proxies.add(proxy)
+
+    return proxies
+
+
+def write_proxies(path: Path, proxies: set[str]) -> None:
+    with path.open("w", encoding="utf-8") as f:
+        for proxy in sorted(proxies):
+            f.write(f"{proxy}\n")
+
+
+def main() -> None:
+    if len(sys.argv) != 4:
+        print(
+            f"Usage: {Path(sys.argv[0]).name} "
+            "<hproxy_live.csv> <proxifly_data.txt> <output.txt>",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+    csv_file = Path(sys.argv[1])
+    proxifly_file = Path(sys.argv[2])
+    output = Path(sys.argv[3])
+
+    proxies: set[str] = set()
+    proxies.update(load_hproxy_csv(csv_file))
+    proxies.update(load_proxifly_txt(proxifly_file))
+
+    write_proxies(output, proxies)
+
+    print("=" * 50)
+    print(f"Generated proxies: {len(proxies)}")
+    print(f"Output: {output}")
+    print("=" * 50)
+
+    if not proxies:
+        raise RuntimeError("No valid proxy generated")
+
+
+if __name__ == "__main__":
+    main()
