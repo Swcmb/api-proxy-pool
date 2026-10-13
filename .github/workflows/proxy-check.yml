@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download proxy sources and mubeng
+      - name: Download sources and mubeng
         shell: bash
         run: |
           mkdir -p workspace
@@ -41,23 +41,41 @@ jobs:
                 .assets[]
                 | select(.name | test("linux.*amd64|amd64.*linux"; "i"))
                 | .browser_download_url
-              ' \
-            | head -1)
+              ' | head -1)
 
           if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
-            echo "Cannot find mubeng linux amd64 asset"
-            curl -s \
-              https://api.github.com/repos/mubeng/mubeng/releases/latest \
-              | jq '.assets[].name'
+            echo "Cannot find mubeng asset"
             exit 1
           fi
 
-          echo "mubeng asset:"
+          echo "Asset:"
           echo "$ASSET_URL"
 
-          wget "$ASSET_URL" -O workspace/mubeng.tar.gz
-          tar -xf workspace/mubeng.tar.gz -C workspace
+          FILE_NAME=$(basename "$ASSET_URL")
+          echo "File name:"
+          echo "$FILE_NAME"
+
+          curl -L "$ASSET_URL" -o "workspace/$FILE_NAME"
+
+          if [[ "$FILE_NAME" == *.tar.gz ]]; then
+            echo "Extract tar.gz"
+            tar -xzf "workspace/$FILE_NAME" -C workspace
+          elif [[ "$FILE_NAME" == *.zip ]]; then
+            echo "Extract zip"
+            unzip "workspace/$FILE_NAME" -d workspace
+          else
+            echo "Binary file detected"
+            mv "workspace/$FILE_NAME" workspace/mubeng
+          fi
+
+          if [ ! -f workspace/mubeng ]; then
+            echo "Searching mubeng binary"
+            find workspace -type f -name "mubeng*" -exec mv {} workspace/mubeng \;
+          fi
+
           chmod +x workspace/mubeng
+
+          echo "mubeng version:"
           workspace/mubeng --version || true
 
       - uses: actions/upload-artifact@v4
@@ -66,7 +84,7 @@ jobs:
           path: workspace
 
   normalize:
-    name: Normalize Proxies
+    name: Normalize Proxy List
     needs: download
     runs-on: ubuntu-latest
     steps:
@@ -78,18 +96,14 @@ jobs:
           path: workspace
 
       - name: Normalize
-        shell: bash
         run: |
           python scripts/normalize.py \
             workspace/live.csv \
             workspace/proxifly.txt \
             workspace/all.txt
 
-          echo "Proxy count:"
+          echo "Total proxies:"
           wc -l workspace/all.txt
-
-          echo "Preview:"
-          head -20 workspace/all.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -109,14 +123,10 @@ jobs:
           path: workspace
 
       - name: Split
-        shell: bash
         run: |
           python scripts/split.py \
             workspace/all.txt \
             $CHUNKS
-
-          echo "Chunk information:"
-          find workspace/chunks -type f -exec wc -l {} \;
 
       - uses: actions/upload-artifact@v4
         with:
@@ -124,7 +134,7 @@ jobs:
           path: workspace/chunks
 
   test:
-    name: Test Proxy Chunk
+    name: mubeng Check
     needs: split
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -142,44 +152,35 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: raw
-          path: workspace/raw
+          path: raw
 
       - name: Run mubeng
         shell: bash
         run: |
-          mkdir -p result
+          mkdir -p output
 
-          FILE=workspace/chunks/${{ matrix.id }}.txt
+          INPUT="workspace/chunks/${{ matrix.id }}.txt"
 
-          echo "Testing:"
-          echo "$FILE"
-
-          if [ ! -s "$FILE" ]; then
-            echo "Empty chunk, skip"
+          if [ ! -s "$INPUT" ]; then
+            echo "Empty chunk"
             exit 0
           fi
 
-          echo "Proxy count:"
-          wc -l "$FILE"
+          chmod +x raw/mubeng
 
-          echo "Preview:"
-          head -5 "$FILE"
-
-          chmod +x workspace/raw/mubeng
-
-          workspace/raw/mubeng \
-            -f "$FILE" \
-            -o result/alive-${{ matrix.id }}.txt \
+          raw/mubeng \
+            -f "$INPUT" \
+            -o output/alive-${{ matrix.id }}.txt \
             -c 500 \
             --timeout 10
 
       - uses: actions/upload-artifact@v4
         with:
           name: alive-${{ matrix.id }}
-          path: result
+          path: output
 
   build:
-    name: Build Proxy Output
+    name: Build Output
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -193,13 +194,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Generate output
-        shell: bash
+      - name: Generate json
         run: |
-          python scripts/merge_json.py alive output
-
-          echo "Generated files:"
-          ls -lh output
+          python scripts/merge_json.py \
+            alive \
+            output
 
       - uses: actions/upload-artifact@v4
         with:
@@ -207,7 +206,7 @@ jobs:
           path: output
 
   deploy:
-    name: Deploy GitHub Pages
+    name: Deploy Pages
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -216,8 +215,7 @@ jobs:
           name: proxy-result
           path: public
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+      - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: public
