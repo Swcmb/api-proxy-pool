@@ -1,13 +1,36 @@
-﻿name: Proxy Pool Builder
+name: Proxy Pool Builder
 
 on:
   workflow_dispatch:
+    inputs:
+      chunks:
+        description: '分片数量'
+        required: false
+        default: '16'
+        type: string
+      concurrency:
+        description: '并行 Runner 数量'
+        required: false
+        default: '8'
+        type: string
+      connections:
+        description: 'mubeng 并发连接数'
+        required: false
+        default: '500'
+        type: string
+      timeout:
+        description: 'mubeng 超时秒数'
+        required: false
+        default: '10'
+        type: string
   schedule:
     - cron: "0 */6 * * *"
 
 env:
-  CHUNKS: 16
-  CONCURRENCY: 8
+  CHUNKS: ${{ github.event.inputs.chunks || '16' }}
+  CONCURRENCY: ${{ github.event.inputs.concurrency || '8' }}
+  CONNECTIONS: ${{ github.event.inputs.connections || '500' }}
+  TIMEOUT: ${{ github.event.inputs.timeout || '10' }}
 
 permissions:
   contents: write
@@ -21,7 +44,7 @@ jobs:
 
       - name: Download proxy source
         run: |
-          mkdir workspace
+          mkdir -p workspace
 
           curl -L \
             https://raw.githubusercontent.com/hproxy-com/free-proxy-list/main/live.csv \
@@ -35,10 +58,10 @@ jobs:
             https://api.github.com/repos/mubeng/mubeng/releases/latest \
             | jq -r .tag_name)
 
-          echo $VERSION > workspace/mubeng.version
+          echo "$VERSION" > workspace/mubeng.version
 
           wget \
-            https://github.com/mubeng/mubeng/releases/download/${VERSION}/mubeng_linux_amd64.tar.gz \
+            "https://github.com/mubeng/mubeng/releases/download/${VERSION}/mubeng_linux_amd64.tar.gz" \
             -O workspace/mubeng.tar.gz
 
           tar xf workspace/mubeng.tar.gz -C workspace
@@ -74,7 +97,11 @@ jobs:
   split:
     needs: normalize
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: normalized
@@ -83,7 +110,13 @@ jobs:
       - run: |
           python scripts/split.py \
             workspace/all.txt \
-            $CHUNKS
+            ${{ env.CHUNKS }}
+
+      - name: Build matrix
+        id: matrix
+        run: |
+          MATRIX=$(python -c 'import json, os; print(json.dumps(list(range(int(os.environ["CHUNKS"])))))')
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -95,15 +128,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: ${{ vars.CONCURRENCY }}
+      max-parallel: ${{ fromJSON(github.event.inputs.concurrency || '8') }}
       matrix:
-        id: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        id: ${{ fromJSON(needs.split.outputs.matrix) }}
     timeout-minutes: 120
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: chunks
-          path: workspace
+          path: workspace/chunks
 
       - uses: actions/download-artifact@v4
         with:
@@ -111,12 +144,13 @@ jobs:
           path: workspace/raw
 
       - run: |
-          mkdir result
+          chmod +x workspace/raw/mubeng
+          mkdir -p result
           workspace/raw/mubeng \
             -f workspace/chunks/${{ matrix.id }}.txt \
             -o result/alive-${{ matrix.id }}.txt \
-            -c 500 \
-            --timeout 10
+            -c ${{ env.CONNECTIONS }} \
+            --timeout ${{ env.TIMEOUT }}
 
       - uses: actions/upload-artifact@v4
         with:
