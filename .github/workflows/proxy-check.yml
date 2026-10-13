@@ -54,17 +54,22 @@ jobs:
             https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt \
             -o workspace/proxifly.txt
 
+      - name: Download mubeng
+        run: |
           VERSION=$(curl -s \
             https://api.github.com/repos/mubeng/mubeng/releases/latest \
             | jq -r .tag_name)
 
+          ASSET_URL=$(curl -s \
+            https://api.github.com/repos/mubeng/mubeng/releases/latest \
+            | jq -r '.assets[] | select(.name | test("linux.*amd64")) | .browser_download_url')
+
           echo "$VERSION" > workspace/mubeng.version
 
-          wget \
-            "https://github.com/mubeng/mubeng/releases/download/${VERSION}/mubeng_linux_amd64.tar.gz" \
-            -O workspace/mubeng.tar.gz
+          echo "Downloading mubeng ${VERSION}"
+          echo "URL: ${ASSET_URL}"
 
-          tar xf workspace/mubeng.tar.gz -C workspace
+          wget "$ASSET_URL" -O workspace/mubeng
           chmod +x workspace/mubeng
 
       - uses: actions/upload-artifact@v4
